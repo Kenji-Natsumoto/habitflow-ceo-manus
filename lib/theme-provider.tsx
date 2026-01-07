@@ -7,6 +7,7 @@ import { SchemeColors, type ColorScheme } from "@/constants/theme";
 type ThemeContextValue = {
   colorScheme: ColorScheme;
   setColorScheme: (scheme: ColorScheme) => void;
+  toggleColorScheme: () => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -54,12 +55,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     [colorScheme],
   );
 
+  const toggleColorScheme = useCallback(() => {
+    const newScheme = colorScheme === "dark" ? "light" : "dark";
+    setColorScheme(newScheme);
+  }, [colorScheme, setColorScheme]);
+
   const value = useMemo(
     () => ({
       colorScheme,
       setColorScheme,
+      toggleColorScheme,
     }),
-    [colorScheme, setColorScheme],
+    [colorScheme, setColorScheme, toggleColorScheme],
   );
   console.log(value, themeVariables)
 
@@ -77,3 +84,5 @@ export function useThemeContext(): ThemeContextValue {
   }
   return ctx;
 }
+
+export const useTheme = useThemeContext;

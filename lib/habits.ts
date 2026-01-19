@@ -125,13 +125,29 @@ export const DEFAULT_HABITS: Habit[] = [
 
 const STORAGE_KEY = "habitflow_data";
 
-export function getTodayString(): string {
-  const now = new Date();
-  return now.toISOString().split("T")[0];
+/**
+ * 日付をYYYY-MM-DD形式の文字列に変換する
+ * @param date 変換する日付（省略時は今日）
+ * @returns YYYY-MM-DD形式の文字列
+ */
+export function formatDateToString(date: Date = new Date()): string {
+  return date.toISOString().split("T")[0];
 }
 
+/**
+ * @deprecated formatDateToString() を使用してください
+ * 後方互換性のためのエイリアス
+ */
+export function getTodayString(): string {
+  return formatDateToString();
+}
+
+/**
+ * @deprecated formatDateToString(date) を使用してください
+ * 後方互換性のためのエイリアス
+ */
 export function getDateString(date: Date): string {
-  return date.toISOString().split("T")[0];
+  return formatDateToString(date);
 }
 
 export async function loadHabitState(): Promise<HabitState> {
@@ -165,24 +181,56 @@ export async function saveHabitState(state: HabitState): Promise<void> {
   }
 }
 
+/** 連続達成とみなす達成率の閾値（50%） */
+const STREAK_THRESHOLD = 0.5;
+
+/** ストリーク計算の最大遡及日数 */
+const MAX_STREAK_DAYS = 365;
+
+/**
+ * 指定日のログが達成基準を満たしているか判定
+ * @param log 対象日のログ
+ * @param totalHabits 習慣の総数
+ * @param threshold 達成とみなす閾値（デフォルト: 50%）
+ */
+function isDayCompleted(
+  log: HabitLog | undefined,
+  totalHabits: number,
+  threshold: number = STREAK_THRESHOLD
+): boolean {
+  if (!log || totalHabits === 0) return false;
+  return log.completedHabits.length >= Math.floor(totalHabits * threshold);
+}
+
+/**
+ * ログ配列をMapに変換して高速検索を可能にする
+ * @param logs ログ配列
+ */
+function createLogMap(logs: HabitLog[]): Map<string, HabitLog> {
+  return new Map(logs.map((log) => [log.date, log]));
+}
+
+/**
+ * 連続達成日数を計算
+ * @param logs 習慣ログの配列
+ * @param habits 習慣の配列
+ * @returns 連続達成日数
+ */
 export function calculateStreak(logs: HabitLog[], habits: Habit[]): number {
   if (logs.length === 0) return 0;
 
-  const sortedLogs = [...logs].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
-
+  const logMap = createLogMap(logs);
   let streak = 0;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  for (let i = 0; i < 365; i++) {
+  for (let i = 0; i < MAX_STREAK_DAYS; i++) {
     const checkDate = new Date(today);
     checkDate.setDate(checkDate.getDate() - i);
-    const dateStr = getDateString(checkDate);
+    const dateStr = formatDateToString(checkDate);
 
-    const log = sortedLogs.find((l) => l.date === dateStr);
-    if (log && log.completedHabits.length >= Math.floor(habits.length * 0.5)) {
+    const log = logMap.get(dateStr);
+    if (isDayCompleted(log, habits.length)) {
       streak++;
     } else if (i > 0) {
       break;
@@ -192,16 +240,26 @@ export function calculateStreak(logs: HabitLog[], habits: Habit[]): number {
   return streak;
 }
 
+/**
+ * 今日のログを取得
+ * @param logs ログ配列
+ */
 export function getTodayLog(logs: HabitLog[]): HabitLog | undefined {
-  const today = getTodayString();
+  const today = formatDateToString();
   return logs.find((l) => l.date === today);
 }
 
+/**
+ * 習慣の完了状態をトグル
+ * @param logs 現在のログ配列
+ * @param habitId トグルする習慣のID
+ * @returns 更新後のログ配列
+ */
 export function toggleHabitCompletion(
   logs: HabitLog[],
   habitId: string
 ): HabitLog[] {
-  const today = getTodayString();
+  const today = formatDateToString();
   const existingLogIndex = logs.findIndex((l) => l.date === today);
 
   if (existingLogIndex >= 0) {
@@ -223,6 +281,10 @@ export function toggleHabitCompletion(
   }
 }
 
+/**
+ * 過去7日間の日付配列を取得
+ * @returns 7日分のDateオブジェクト配列（古い順）
+ */
 export function getWeekDates(): Date[] {
   const dates: Date[] = [];
   const today = new Date();
@@ -237,6 +299,12 @@ export function getWeekDates(): Date[] {
   return dates;
 }
 
+/**
+ * 達成率を計算
+ * @param log 対象日のログ
+ * @param totalHabits 習慣の総数
+ * @returns 達成率（0-100）
+ */
 export function getCompletionRate(log: HabitLog | undefined, totalHabits: number): number {
   if (!log || totalHabits === 0) return 0;
   return Math.round((log.completedHabits.length / totalHabits) * 100);

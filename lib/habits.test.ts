@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   DEFAULT_HABITS,
+  formatDateToString,
   getTodayString,
   getDateString,
   toggleHabitCompletion,
@@ -40,18 +41,44 @@ describe("habits", () => {
     });
   });
 
-  describe("getTodayString", () => {
+  describe("formatDateToString", () => {
+    it("should return date in YYYY-MM-DD format for today when no argument", () => {
+      const result = formatDateToString();
+      expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    });
+
+    it("should format specific date correctly", () => {
+      const date = new Date("2026-01-07T12:00:00Z");
+      const result = formatDateToString(date);
+      expect(result).toBe("2026-01-07");
+    });
+  });
+
+  describe("getTodayString (deprecated)", () => {
     it("should return date in YYYY-MM-DD format", () => {
       const result = getTodayString();
       expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     });
+
+    it("should return same result as formatDateToString()", () => {
+      const result1 = getTodayString();
+      const result2 = formatDateToString();
+      expect(result1).toBe(result2);
+    });
   });
 
-  describe("getDateString", () => {
+  describe("getDateString (deprecated)", () => {
     it("should format date correctly", () => {
       const date = new Date("2026-01-07T12:00:00Z");
       const result = getDateString(date);
       expect(result).toBe("2026-01-07");
+    });
+
+    it("should return same result as formatDateToString(date)", () => {
+      const date = new Date("2026-01-07T12:00:00Z");
+      const result1 = getDateString(date);
+      const result2 = formatDateToString(date);
+      expect(result1).toBe(result2);
     });
   });
 
@@ -65,7 +92,7 @@ describe("habits", () => {
     });
 
     it("should add habit to existing today log", () => {
-      const today = getTodayString();
+      const today = formatDateToString();
       const logs: HabitLog[] = [{ date: today, completedHabits: ["meditation"] }];
       const result = toggleHabitCompletion(logs, "reading");
       
@@ -75,7 +102,7 @@ describe("habits", () => {
     });
 
     it("should remove habit if already completed", () => {
-      const today = getTodayString();
+      const today = formatDateToString();
       const logs: HabitLog[] = [{ date: today, completedHabits: ["reading", "meditation"] }];
       const result = toggleHabitCompletion(logs, "reading");
       
@@ -91,7 +118,7 @@ describe("habits", () => {
     });
 
     it("should return today's log if exists", () => {
-      const today = getTodayString();
+      const today = formatDateToString();
       const logs: HabitLog[] = [
         { date: "2025-01-01", completedHabits: ["old"] },
         { date: today, completedHabits: ["reading"] },
@@ -157,17 +184,36 @@ describe("habits", () => {
       
       const logs: HabitLog[] = [
         {
-          date: getDateString(today),
+          date: formatDateToString(today),
           completedHabits: ["a", "b", "c", "d", "e", "f", "g"], // 7/12 = 58%
         },
         {
-          date: getDateString(yesterday),
+          date: formatDateToString(yesterday),
           completedHabits: ["a", "b", "c", "d", "e", "f"], // 6/12 = 50%
         },
       ];
       
       const result = calculateStreak(logs, DEFAULT_HABITS);
       expect(result).toBe(2);
+    });
+
+    it("should use Map for efficient log lookup", () => {
+      // This test verifies the performance improvement
+      const today = new Date();
+      const logs: HabitLog[] = [];
+      
+      // Create 100 days of logs
+      for (let i = 0; i < 100; i++) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        logs.push({
+          date: formatDateToString(date),
+          completedHabits: ["a", "b", "c", "d", "e", "f"], // 50%
+        });
+      }
+      
+      const result = calculateStreak(logs, DEFAULT_HABITS);
+      expect(result).toBe(100);
     });
   });
 });

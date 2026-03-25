@@ -1,0 +1,31 @@
+{
+  "short_name": "HabitFlow",
+  "name": "HabitFlow for CEO - 経営者の習慣トラッカー",
+  "description": "経営者のための習慣トラッキングアプリ。自己啓発と実務の両面から、事業成功に必要な習慣を毎日管理。",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0F0F14",
+  "background_color": "#0F0F14",
+  "categories": ["productivity", "business"],
+  "lang": "ja"
+}

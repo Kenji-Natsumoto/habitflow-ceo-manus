@@ -179,27 +179,42 @@ describe("habits", () => {
 
     it("should count consecutive days with 50%+ completion", () => {
       const today = new Date();
+      today.setHours(12, 0, 0, 0); // 正午に固定してタイムゾーンの影響を排除
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
+      
+      // テスト用の小さな習慣セット
+      const testHabits: Habit[] = [
+        { id: "a", name: "A", description: "", icon: "book", category: "mind", isDefault: true },
+        { id: "b", name: "B", description: "", icon: "book", category: "mind", isDefault: true },
+        { id: "c", name: "C", description: "", icon: "book", category: "mind", isDefault: true },
+        { id: "d", name: "D", description: "", icon: "book", category: "mind", isDefault: true },
+      ];
       
       const logs: HabitLog[] = [
         {
           date: formatDateToString(today),
-          completedHabits: ["a", "b", "c", "d", "e", "f", "g"], // 7/12 = 58%
+          completedHabits: ["a", "b", "c"], // 3/4 = 75%
         },
         {
           date: formatDateToString(yesterday),
-          completedHabits: ["a", "b", "c", "d", "e", "f"], // 6/12 = 50%
+          completedHabits: ["a", "b"], // 2/4 = 50%
         },
       ];
       
-      const result = calculateStreak(logs, DEFAULT_HABITS);
+      const result = calculateStreak(logs, testHabits);
       expect(result).toBe(2);
     });
 
     it("should use Map for efficient log lookup", () => {
-      // This test verifies the performance improvement
+      // テスト用の小さな習慣セット（2個なので1個完了で50%）
+      const testHabits: Habit[] = [
+        { id: "a", name: "A", description: "", icon: "book", category: "mind", isDefault: true },
+        { id: "b", name: "B", description: "", icon: "book", category: "mind", isDefault: true },
+      ];
+      
       const today = new Date();
+      today.setHours(12, 0, 0, 0);
       const logs: HabitLog[] = [];
       
       // Create 100 days of logs
@@ -208,11 +223,11 @@ describe("habits", () => {
         date.setDate(date.getDate() - i);
         logs.push({
           date: formatDateToString(date),
-          completedHabits: ["a", "b", "c", "d", "e", "f"], // 50%
+          completedHabits: ["a", "b"], // 2/2 = 100%
         });
       }
       
-      const result = calculateStreak(logs, DEFAULT_HABITS);
+      const result = calculateStreak(logs, testHabits);
       expect(result).toBe(100);
     });
   });

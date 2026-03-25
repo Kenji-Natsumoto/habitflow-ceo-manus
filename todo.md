@@ -17,3 +17,8 @@
 - [x] レビュー結果レポートの作成
 - [x] 問題2: console.log削除（theme-provider.tsx）
 - [x] 問題1: 命名改善（habits.ts）
+- [x] PWA: Web App Manifest の作成
+- [x] PWA: Service Worker の実装
+- [x] PWA: オフライン対応
+- [x] PWA: ホーム画面追加対応
+- [x] PWA: app.config.ts のWeb設定更新
